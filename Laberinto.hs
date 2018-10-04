@@ -10,14 +10,29 @@ Stability   : experimental
 Módulo para crear y manejar un Laberinto.
 -}
 module Laberinto (
+  -- * Tipos de Datos
   Laberinto,
+  Indicador,
+  Ruta,
+  -- * Funciones de Construcción
   laberintoStart, 
-  tesoroAdd
+  tesoroAdd,
+  trifurcacionAdd
 ) where
 
 import Data.Maybe
 import Data.String
 import Text.Read
+
+-- | Indicador de cuál camino relaciona una Trifurcacion y un Laberinto
+data Indicador 
+  = Izq
+  | Rect
+  | Der
+  deriving (Enum, Show, Read)
+
+-- | Ruta hecha por Indicadores
+type Ruta = [Indicador]
 
 -- | Conocimientos sobre un Laberinto
 data Laberinto 
@@ -48,3 +63,10 @@ laberintoStart = Trifurcacion Nothing Nothing Nothing
 -- | indicando qué encontrarán si pasan por alto el tesoro
 tesoroAdd :: String -> Laberinto -> Laberinto
 tesoroAdd d l = Tesoro d (Just l)
+
+-- | Conecta una Trifurcación a un Laberinto siguiendo la dirección de un Indicador
+trifurcacionAdd :: Laberinto -> Laberinto -> Indicador -> Laberinto
+trifurcacionAdd (Tesoro _ _) _ _ = error "Esta función es sólo para añadir Trifurcaciones"
+trifurcacionAdd t l Izq = Trifurcacion {lft=Just l, fwd=fwd t, rgt=rgt t}
+trifurcacionAdd t l Rect = Trifurcacion {lft=lft t, fwd=Just l, rgt=rgt t}
+trifurcacionAdd t l Der = Trifurcacion {lft=lft t, fwd=fwd t, rgt=Just l}
