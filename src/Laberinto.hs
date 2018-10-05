@@ -36,7 +36,10 @@ data Indicador
   = Izq
   | Rect
   | Der
-  deriving (Enum, Show, Read)
+  deriving ( Enum -- ^ Test
+           , Show
+           , Read
+           )
 
 -- | Ruta hecha por Indicadores
 type Ruta = [Indicador]
@@ -60,7 +63,7 @@ data Laberinto
                   -- | o Nothing si no es posible seguir a la recto
                   , rgt :: Maybe Laberinto
                   }
-    deriving (Show, Read)
+    deriving (Read, Show)
 
 -- * Funciones de Construcción
 
