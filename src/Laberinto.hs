@@ -36,7 +36,7 @@ data Indicador
   = Izq
   | Rect
   | Der
-  deriving ( Enum -- ^ Test
+  deriving ( Enum
            , Show
            , Read
            )
