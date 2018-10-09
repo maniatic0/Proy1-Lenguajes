@@ -42,7 +42,7 @@ getRuta = do
     case linea == "" of 
         True -> lift $ putStr "Ruta Leida Completa: " 
         False -> do 
-            case (readMaybe linea) :: Maybe Indicador of
+            case readMaybe linea :: Maybe Indicador of
                 Nothing -> do lift $ 
                                 putStrLn ("Error leyendo parte de Ruta. Input Invalido: " ++ linea)
                               getRuta
