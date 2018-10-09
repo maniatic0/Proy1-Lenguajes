@@ -78,7 +78,7 @@ tesoroAdd d l = Tesoro d (Just l)
 
 -- | Conecta una Trifurcación a un Laberinto siguiendo la dirección de un Indicador
 trifurcacionAdd :: Laberinto -> Laberinto -> Indicador -> Laberinto
-trifurcacionAdd (Tesoro _ _) _ _ = error "Esta función es sólo para añadir Trifurcaciones"
+trifurcacionAdd Tesoro {} _ _ = error "Esta función es sólo para añadir Trifurcaciones"
 trifurcacionAdd t l Izq = Trifurcacion {lft=Just l, fwd=fwd t, rgt=rgt t}
 trifurcacionAdd t l Rect = Trifurcacion {lft=lft t, fwd=Just l, rgt=rgt t}
 trifurcacionAdd t l Der = Trifurcacion {lft=lft t, fwd=fwd t, rgt=Just l}
@@ -86,23 +86,26 @@ trifurcacionAdd t l Der = Trifurcacion {lft=lft t, fwd=fwd t, rgt=Just l}
 -- * Funciones de Acceso
 
 -- | Dado un Laberinto y una Ruta, devuelve el Laberinto alcanzado al seguir la Ruta
-seguirRuta :: Laberinto -> Ruta -> Laberinto
-seguirRuta l [] = l
-seguirRuta l (Izq:xs) = seguirRuta (seguirIzq l) xs
-seguirRuta l (Rect:xs) = seguirRuta (seguirRect l) xs
-seguirRuta l (Der:xs) = seguirRuta (seguirDer l) xs
+seguirRuta :: Laberinto -> Ruta -> Maybe Laberinto
+seguirRuta l [] = Just l
+-- Maybe es un monad, asi que lo aprovechamos
+seguirRuta l (x:xs) = case x of 
+  Izq -> seguirIzq l >>= seguir
+  Rect -> seguirRect l >>= seguir
+  Der -> seguirDer l >>= seguir
+  where seguir lab = seguirRuta lab xs
 
 -- | Dado un Laberinto, devuelve el Laberinto alcanzado al seguir a la Izquierda
-seguirIzq :: Laberinto -> Laberinto
-seguirIzq Tesoro {} = error "No se puede seguir a la Izquierda en Tesoros" 
-seguirIzq Trifurcacion {lft=l} = fromMaybe (error "No se puede seguir a la Izquierda en esta Trifurcación") l
+seguirIzq :: Laberinto -> Maybe Laberinto
+seguirIzq Tesoro {} = Nothing
+seguirIzq Trifurcacion {lft=l} = l
 
 -- | Dado un Laberinto, devuelve el Laberinto alcanzado al seguir Recto
-seguirRect :: Laberinto -> Laberinto
-seguirRect Tesoro {fwd=f} = fromMaybe (error  "No se puede seguir Recto en este Tesoro") f
-seguirRect Trifurcacion {fwd=f} = fromMaybe (error "No se puede seguir Recto en esta Trifurcación") f
+seguirRect :: Laberinto -> Maybe Laberinto
+seguirRect Tesoro {fwd=f} = f
+seguirRect Trifurcacion {fwd=f} = f
 
 -- | Dado un Laberinto, devuelve el Laberinto alcanzado al seguir a la Derecha
-seguirDer :: Laberinto -> Laberinto
-seguirDer Tesoro {} = error "No se puede seguir a la Derecha en Tesoros" 
-seguirDer Trifurcacion {rgt=r} = fromMaybe (error "No se puede seguir a la Derecha en esta Trifurcación") r
+seguirDer :: Laberinto -> Maybe Laberinto
+seguirDer Tesoro {} = Nothing 
+seguirDer Trifurcacion {rgt=r} = r
