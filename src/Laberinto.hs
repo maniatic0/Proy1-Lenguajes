@@ -72,7 +72,7 @@ laberintoStart :: Laberinto
 laberintoStart = Trifurcacion Nothing Nothing Nothing
 
 -- | Crea un tesoro, con su descripción y un Laberinto 
--- | indicando qué encontrarán si pasan por alto el tesoro
+--  indicando qué encontrarán si pasan por alto el tesoro
 tesoroAdd :: String -> Laberinto -> Laberinto
 tesoroAdd d l = Tesoro d (Just l)
 

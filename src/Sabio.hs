@@ -9,7 +9,13 @@ Stability   : experimental
 
 Módulo para que un Sabio maneje un Laberinto.
 -}
-module Main where
+module Main (
+    main,
+    -- * Lectura de Rutas
+    RutaState,
+    getRuta,
+    getRutaStart
+) where
 
 import Control.Monad.State 
 import Text.Read hiding (lift, get)
@@ -20,12 +26,16 @@ main :: IO ()
 main = do
     putStrLn "Hello, Haskell!"
     ruta <- execStateT getRutaStart []
-    putStrLn $ show ruta
+    print ruta
+
+
+-- * Lectura de Rutas
 
 -- | Monad State para manejar lectura de una ruta
 type RutaState = StateT Ruta IO ()
 
-
+-- | Manejo de Lectura de una Ruta. 
+-- No Imprime Instrucciones de uso y devuelve la ruta al revéz
 getRuta :: RutaState
 getRuta = do 
     linea <- lift getLine
@@ -33,22 +43,23 @@ getRuta = do
         True -> lift $ putStr "Ruta Leida Completa: " 
         False -> do 
             case (readMaybe linea) :: Maybe Indicador of
-                Nothing -> do 
-                    lift $ putStrLn ("Error leyendo parte de Ruta. Input Invalido: " ++ linea)
-                    getRuta
-                Just x -> do 
-                    modify (\xs -> xs ++ [x])
-                    r <- get
-                    lift $ putStrLn ("Ruta actual: " ++ show r)
-                    getRuta
+                Nothing -> do lift $ 
+                                putStrLn ("Error leyendo parte de Ruta. Input Invalido: " ++ linea)
+                              getRuta
+                Just x -> do modify (\xs -> x:xs)
+                             r <- get
+                             lift $ putStrLn ("Ruta actual: " ++ show r)
+                             getRuta
 
+-- | Manejo de Lectura de una Ruta. 
+-- Imprime Instrucciones de uso y devuelve la ruta de forma correcta
 getRutaStart :: RutaState
 getRutaStart = do 
-    lift $ putStrLn linea
+    lift $ print linea
     getRuta
     modify reverse
     r <- get 
-    lift $ putStrLn (show r)
+    lift $ print r
     where linea = "Escriba 'Izq', 'Der' o 'Rect' para indicar una seccion de la ruta.\
                 \ Luego presione enter para insertarlo en la ruta.\n \
                 \Para indicar fin de ruta, envie una linea vacía.\n \
