@@ -11,7 +11,7 @@ Módulo para crear y manejar un Laberinto.
 -}
 module Laberinto (
   -- * Tipos de Datos
-  Laberinto,
+  Laberinto(..),
   Indicador,
   Ruta,
   -- * Funciones de Construcción

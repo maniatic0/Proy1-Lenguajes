@@ -12,7 +12,12 @@ Módulo para que un Sabio maneje un Laberinto.
 module Main (
     main,
     -- * Manejo de Sabio
-    laberintoNew,
+    SabioConocimiento,
+    SabioState,
+    sabioNewLaberinto,
+    mostrarLab,
+    sabioPreguntarContinuarONuevo,
+    sabioManejarRuta,
     -- * Lectura de Rutas
     RutaState,
     getRuta,
@@ -27,8 +32,10 @@ import Laberinto
 main :: IO ()
 main = do
   putStrLn "Hello, Haskell!"
-  lab <- laberintoNew
-  print lab
+  sabio <- execStateT sabioNewLaberinto (SabioConocimiento laberintoStart [])
+  sabio2 <- execStateT sabioManejarRuta sabio
+  print (lab sabio2)
+  print (camino sabio2)
 
 
 -- * Lectura de Rutas
@@ -69,12 +76,101 @@ getRutaStart = do
  
 -- * Manejo de Sabio
 
+-- | Conocimientos del Sabio
+data SabioConocimiento = SabioConocimiento { 
+  -- | Laberinto que está pensando el Sabio
+  lab :: Laberinto, 
+  -- | Laberinto que se le dijo al Sabio
+  camino :: Ruta
+  }
+
+-- | Monad State para manejar el conocimiento del sabio
+type SabioState = StateT SabioConocimiento IO ()
+
 -- | Comenzar a hablar de un laberinto nuevo: Si esta opción es seleccionada, 
 -- se reemplaza el laberinto en memoria con un laberinto vacío y se pide una ruta 
 -- que puede ser seguida en el mismo. Se usa esta ruta para poblar el laberinto inicialmente. 
 -- La ruta debe suponerse terminada en un camino sin salida y no contener tesoros.
-laberintoNew :: IO Laberinto
-laberintoNew = do
-  putStrLn "Comenzando Laberinto nuevo.\nPor favor indique Ruta inicial."
-  ruta <- execStateT getRutaStart []
-  return (foldr (\i l-> trifurcacionAdd laberintoStart l i) laberintoStart ruta)
+sabioNewLaberinto :: SabioState
+sabioNewLaberinto = do
+  lift $ putStrLn "Comenzando Laberinto nuevo.\nPor favor indique Ruta inicial."
+  ruta <- lift $ execStateT getRutaStart []
+  put $ SabioConocimiento (foldr (flip (trifurcacionAdd laberintoStart)) laberintoStart ruta) ruta 
+
+-- | Función para ayudar al sabio a describir el final de una ruta
+mostrarLab :: Maybe Laberinto -> IO ()
+
+mostrarLab Nothing = do 
+  putStrLn "Se ha llegado a una Trifurcación sin salida."
+
+mostrarLab (Just (Tesoro desc fwd)) = do 
+  putStrLn ("Encontrado tesoro con descripción: " ++ desc)
+  case fwd of
+    Nothing -> putStrLn "Este tesoro esta en un cuarto sin forma de avanzar."
+    Just _ ->  putStrLn "Este tesoro esta en un cuarto donde se puede avanzar."
+
+mostrarLab (Just (Trifurcacion Nothing Nothing Nothing)) = do 
+  putStrLn "Se ha llegado a una Trifurcación sin salida."
+
+mostrarLab (Just (Trifurcacion lft fwd rgt)) = do 
+  putStrLn "Se ha llegado a una Trifurcación donde se puede ir a: "
+  case lft of 
+    Nothing -> putStr ""
+    Just _ -> putStrLn "\t Se puede ir a la Izquierda"
+  case fwd of 
+    Nothing -> putStr ""
+    Just _ -> putStrLn "\t Se puede ir a hacia Adelante"
+  case rgt of 
+    Nothing -> putStr ""
+    Just _ -> putStrLn "\t Se puede ir a la Derecha"
+
+-- | Función para ayudar al sabio a preguntar sobre los deseos de la persona
+sabioPreguntarContinuarONuevo :: IO Int
+sabioPreguntarContinuarONuevo= do 
+  putStrLn "Se desea Continuar la Ruta (1) o Preguntar Ruta Nueva (2):"
+  ans <- getLine
+  case readMaybe ans :: Maybe Int of
+    Nothing -> do 
+      putStrLn "Opción Inválida"
+      sabioPreguntarContinuarONuevo
+    Just 1 -> do
+          putStrLn "Se Continuará la Ruta"
+          return 1
+    Just  2 -> do
+          putStrLn "Se Preguntará por la Ruta Nueva"
+          return 2
+    Just _ -> do 
+          putStrLn "Opción Inválida"
+          sabioPreguntarContinuarONuevo
+
+-- | Función para que el sabio describa que pasa al seguir una ruta
+sabioManejarRuta :: SabioState
+sabioManejarRuta = do 
+  sabio <- get
+  let ruta = camino sabio
+  let l = lab sabio
+  case ruta of 
+    [] -> do 
+        lift $ putStrLn "El Sabio regunta por una Ruta a seguir: "
+        r <- lift $ execStateT getRutaStart []
+        put $ SabioConocimiento l r
+        lift $ mostrarLab $ seguirRuta l r 
+    rs -> do
+      i <- lift $ sabioPreguntarContinuarONuevo
+      case i of
+        1 -> do 
+          lift $ putStrLn "Ruta a Continuar: "
+          cr <- lift $ execStateT getRutaStart []
+          let r = (camino sabio) ++ rs 
+          put $ SabioConocimiento l r
+          lift $ mostrarLab $ seguirRuta l r 
+        2 -> do 
+          lift $ putStrLn "Ruta a seguir desde el Inicio de Laberinto: "
+          r <- lift $ execStateT getRutaStart []
+          put $ SabioConocimiento l r
+          lift $ mostrarLab $ seguirRuta l r 
+
+          
+
+
+        
