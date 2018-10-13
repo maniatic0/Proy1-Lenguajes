@@ -95,7 +95,7 @@ sabioNewLaberinto :: SabioState
 sabioNewLaberinto = do
   lift $ putStrLn "Comenzando Laberinto nuevo.\nPor favor indique Ruta inicial."
   ruta <- lift $ execStateT getRutaStart []
-  put $ SabioConocimiento (foldr (flip (trifurcacionAdd laberintoStart)) laberintoStart ruta) ruta 
+  put $ SabioConocimiento (foldr (flip (trifurcacionAdd laberintoStart)) laberintoStart ruta) [] 
 
 -- | Función para ayudar al sabio a describir el final de una ruta
 mostrarLab :: Maybe Laberinto -> IO ()
@@ -109,20 +109,20 @@ mostrarLab (Just (Tesoro desc fwd)) = do
     Nothing -> putStrLn "Este tesoro esta en un cuarto sin forma de avanzar."
     Just _ ->  putStrLn "Este tesoro esta en un cuarto donde se puede avanzar."
 
-mostrarLab (Just (Trifurcacion Nothing Nothing Nothing)) = do 
+mostrarLab (Just (Trifurcacion Nothing Nothing Nothing)) = 
   putStrLn "Se ha llegado a una Trifurcación sin salida."
 
 mostrarLab (Just (Trifurcacion lft fwd rgt)) = do 
   putStrLn "Se ha llegado a una Trifurcación donde se puede ir a: "
   case lft of 
     Nothing -> putStr ""
-    Just _ -> putStrLn "\t Se puede ir a la Izquierda"
+    Just _ -> putStrLn "\tLa Izquierda"
   case fwd of 
     Nothing -> putStr ""
-    Just _ -> putStrLn "\t Se puede ir a hacia Adelante"
+    Just _ -> putStrLn "\tPara Adelante"
   case rgt of 
     Nothing -> putStr ""
-    Just _ -> putStrLn "\t Se puede ir a la Derecha"
+    Just _ -> putStrLn "\tLa Derecha"
 
 -- | Función para ayudar al sabio a preguntar sobre los deseos de la persona
 sabioPreguntarContinuarONuevo :: IO Int
