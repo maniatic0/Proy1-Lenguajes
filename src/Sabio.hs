@@ -24,6 +24,7 @@ module Main (
     getRutaStart
 ) where
 
+import Data.Maybe
 import Control.Monad.State 
 import Text.Read hiding (lift, get)
 
@@ -34,8 +35,9 @@ main = do
   putStrLn "Hello, Haskell!"
   sabio <- execStateT sabioNewLaberinto (SabioConocimiento laberintoStart [])
   sabio2 <- execStateT sabioManejarRuta sabio
-  print (lab sabio2)
-  print (camino sabio2)
+  sabio3 <- execStateT sabioAbrirPared sabio2
+  print (lab sabio3)
+  print (camino sabio3)
 
 
 -- * Lectura de Rutas
@@ -95,12 +97,12 @@ sabioNewLaberinto :: SabioState
 sabioNewLaberinto = do
   lift $ putStrLn "Comenzando Laberinto nuevo.\nPor favor indique Ruta inicial."
   ruta <- lift $ execStateT getRutaStart []
-  put $ SabioConocimiento (foldr (flip (trifurcacionAdd laberintoStart)) laberintoStart ruta) [] 
+  put $ SabioConocimiento (llenarRuta ruta) [] 
 
 -- | Función para ayudar al sabio a describir el final de una ruta
 mostrarLab :: Maybe Laberinto -> IO ()
 
-mostrarLab Nothing = do 
+mostrarLab Nothing =
   putStrLn "Se ha llegado a una Trifurcación sin salida."
 
 mostrarLab (Just (Tesoro desc fwd)) = do 
@@ -169,6 +171,20 @@ sabioManejarRuta = do
           r <- lift $ execStateT getRutaStart []
           put $ SabioConocimiento l r
           lift $ mostrarLab $ seguirRuta l r 
+
+sabioAbrirPared :: SabioState
+sabioAbrirPared = do 
+  lift $ putStrLn "Ruta a seguir para Abrir una Pared: "
+  r <- lift $ execStateT getRutaStart []
+  sabio <- get
+  let ruta = camino sabio
+  let l = lab sabio
+  let cr = ruta ++ r
+  case seguirRuta l cr of 
+    Nothing -> do 
+      lift $ putStrLn "La Ruta abrió una pared."
+      put $ SabioConocimiento (abrirPared l cr) ruta
+    _ -> lift $ putStrLn "La Ruta no abrió ninguna pared."
 
           
 

@@ -12,12 +12,14 @@ Módulo para crear y manejar un Laberinto.
 module Laberinto (
   -- * Tipos de Datos
   Laberinto(..),
-  Indicador,
-  Ruta,
+  Indicador(..),
+  Ruta(..),
   -- * Funciones de Construcción
   laberintoStart, 
   tesoroAdd,
   trifurcacionAdd,
+  llenarRuta,
+  abrirPared,
   -- * Funciones de Acceso
   seguirRuta,
   seguirIzq,
@@ -82,6 +84,31 @@ trifurcacionAdd Tesoro {} _ _ = error "Esta función es sólo para añadir Trifu
 trifurcacionAdd t l Izq = Trifurcacion {lft=Just l, fwd=fwd t, rgt=rgt t}
 trifurcacionAdd t l Rect = Trifurcacion {lft=lft t, fwd=Just l, rgt=rgt t}
 trifurcacionAdd t l Der = Trifurcacion {lft=lft t, fwd=fwd t, rgt=Just l}
+
+-- | Crea un laberinto siguiendo una ruta
+llenarRuta :: Ruta -> Laberinto
+llenarRuta rs = foldr (flip (trifurcacionAdd laberintoStart)) laberintoStart rs
+
+-- | Abrir seguir ruta para abrir una Pared en un Laberinto y continuar con el resto de la ruta.
+-- Si no llega a pared no hace nada
+abrirPared :: Laberinto -> Ruta -> Laberinto
+abrirPared l [] = l
+
+abrirPared (Tesoro desc fwd) (Rect:xs) = 
+  Tesoro desc $ (Just (maybe (llenarRuta xs) (\l -> abrirPared l xs) fwd))
+
+abrirPared t@Tesoro{} (x:xs) = 
+  case x of
+    Izq -> Trifurcacion jl (Just t) Nothing
+    Der -> Trifurcacion Nothing (Just t) jl 
+  where jl = Just (llenarRuta xs)
+
+abrirPared (Trifurcacion lft fwd rgt) (x:xs) = 
+  case x of 
+    Izq -> Trifurcacion (abrir lft) fwd rgt
+    Rect -> Trifurcacion lft (abrir fwd) rgt
+    Der -> Trifurcacion lft fwd (abrir rgt)
+  where abrir lab = Just (maybe (llenarRuta xs) (\l -> abrirPared l xs) lab)
 
 -- * Funciones de Acceso
 
