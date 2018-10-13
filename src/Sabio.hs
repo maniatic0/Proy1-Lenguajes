@@ -15,6 +15,7 @@ module Main (
     SabioConocimiento,
     SabioState,
     sabioNewLaberinto,
+    sabioCheckPreguntarRuta,
     mostrarLab,
     sabioPreguntarContinuarONuevo,
     sabioManejarRuta,
@@ -99,6 +100,15 @@ sabioNewLaberinto = do
   ruta <- lift $ execStateT getRutaStart []
   put $ SabioConocimiento (llenarRuta ruta) [] 
 
+-- | Sabio revisa las condiciones para Preguntar la Ruta a seguir  
+sabioCheckPreguntarRuta :: Laberinto -> Ruta -> Bool
+sabioCheckPreguntarRuta _ [] = True
+sabioCheckPreguntarRuta l r = 
+  case seguirRuta l r of 
+    Nothing -> False
+    Just Tesoro {} -> False
+    _ -> True
+
 -- | Función para ayudar al sabio a describir el final de una ruta
 mostrarLab :: Maybe Laberinto -> IO ()
 
@@ -151,19 +161,19 @@ sabioManejarRuta = do
   sabio <- get
   let ruta = camino sabio
   let l = lab sabio
-  case ruta of 
-    [] -> do 
+  case sabioCheckPreguntarRuta l ruta of 
+    True -> do 
         lift $ putStrLn "El Sabio regunta por una Ruta a seguir: "
         r <- lift $ execStateT getRutaStart []
         put $ SabioConocimiento l r
         lift $ mostrarLab $ seguirRuta l r 
-    rs -> do
+    False -> do
       i <- lift $ sabioPreguntarContinuarONuevo
       case i of
         1 -> do 
-          lift $ putStrLn "Ruta a Continuar: "
+          lift $ putStrLn "Continuación de Ruta: "
           cr <- lift $ execStateT getRutaStart []
-          let r = (camino sabio) ++ rs 
+          let r = ruta ++ cr 
           put $ SabioConocimiento l r
           lift $ mostrarLab $ seguirRuta l r 
         2 -> do 
