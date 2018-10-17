@@ -19,6 +19,7 @@ module Main (
     mostrarLab,
     sabioPreguntarContinuarONuevo,
     sabioManejarRuta,
+    sabioAbrirPared,
     -- * Lectura de Rutas
     RutaState,
     getRuta,
@@ -182,6 +183,7 @@ sabioManejarRuta = do
           put $ SabioConocimiento l r
           lift $ mostrarLab $ seguirRuta l r 
 
+-- | Función para ayudar al Sabio a abrir una pared en el laberinto
 sabioAbrirPared :: SabioState
 sabioAbrirPared = do 
   lift $ putStrLn "Ruta a seguir para Abrir una Pared: "
