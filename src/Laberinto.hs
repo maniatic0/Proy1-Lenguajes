@@ -26,7 +26,8 @@ module Laberinto (
   -- * Funciones de Modificación
   llenarRuta,
   abrirPared,
-  derrumbe
+  derrumbe,
+  tomarTesoro
 ) where
 
 import Data.Maybe
@@ -150,7 +151,8 @@ derrumbe :: Laberinto -> Ruta -> Indicador -> Laberinto
 derrumbe Tesoro{desc=d}  [] Rect = Tesoro d Nothing
 derrumbe t@Tesoro{}  [] _ = t
 
-derrumbe (Tesoro desc fwd) (Rect:xs) i = Tesoro desc (fwd >>= (\l -> Just (derrumbe l xs i)))
+derrumbe (Tesoro desc fwd) (Rect:xs) i = 
+  Tesoro desc (fwd >>= (\l -> Just (derrumbe l xs i)))
 derrumbe t@Tesoro{} (_:_) _ = t
 
 derrumbe Trifurcacion{lft=lf, fwd=fd, rgt=rg} [] i = 
@@ -165,3 +167,21 @@ derrumbe Trifurcacion{lft=lf, fwd=fd, rgt=rg} (x:xs) i =
     Rect -> Trifurcacion lf (fd >>= seguir) rg 
     Der -> Trifurcacion lf fd (rg >>= seguir)
   where seguir lab = Just (derrumbe lab xs i)
+
+-- | Se sigue la Ruta hasta llegar a un Tesoro
+tomarTesoro :: Laberinto -> Ruta -> Maybe Laberinto
+tomarTesoro Tesoro{} [] = Nothing
+-- No deberia usarse, pero esta por si acaso
+tomarTesoro l [] = Just l
+
+tomarTesoro (Tesoro d fwd) (Rect:xs) =  
+  Just $ Tesoro d (fwd >>= (\l -> tomarTesoro l xs))
+
+tomarTesoro t@Tesoro{} (_:_) = Just t
+
+tomarTesoro Trifurcacion{lft=lf, fwd=fd, rgt=rg} (x:xs) =
+  case x of
+    Izq -> Just $ Trifurcacion (lf >>= seguir) fd rg 
+    Rect -> Just $ Trifurcacion lf (fd >>= seguir) rg 
+    Der -> Just $ Trifurcacion lf fd (rg >>= seguir)
+  where seguir lab = tomarTesoro lab xs
