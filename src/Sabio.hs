@@ -21,6 +21,7 @@ module Main (
     sabioManejarRuta,
     sabioAbrirPared,
     sabioDerrumbe,
+    sabioTomarTesoro,
     -- * Lectura de Indicadores
     getIndicador,
     getIndicadorStart,
@@ -43,8 +44,9 @@ main = do
   sabio2 <- execStateT sabioManejarRuta sabio
   sabio3 <- execStateT sabioAbrirPared sabio2
   sabio4 <- execStateT sabioDerrumbe sabio3
-  print (lab sabio4)
-  print (camino sabio4)
+  sabio5 <- execStateT sabioTomarTesoro sabio4
+  print (lab sabio5)
+  print (camino sabio5)
 
 
 -- * Lectura de Indicadores
@@ -237,6 +239,21 @@ sabioDerrumbe = do
   let cr = ruta ++ r
   put $ SabioConocimiento (derrumbe l cr indi) ruta
 
+
+-- | Función para ayudar al Sabio a tomar un Tesoro del Laberinto
+sabioTomarTesoro :: SabioState
+sabioTomarTesoro = do 
+  lift $ putStrLn "Ruta a seguir para tomar un Tesoro del Laberinto: "
+  r <- lift $ execStateT getRutaStart []
+  sabio <- get
+  let ruta = camino sabio
+  let l = lab sabio
+  let cr = ruta ++ r
+  case seguirRuta l cr of
+    Just Tesoro{desc=d} ->  do
+      lift $ putStrLn ("Tesoro Tomado con descripción: " ++ d)
+      put $ SabioConocimiento (fromJust (tomarTesoro l cr)) ruta
+    _ -> lift $ putStrLn "No se ha encontrado un Tesoro para tomar."
           
 
 
