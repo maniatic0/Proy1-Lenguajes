@@ -20,6 +20,10 @@ module Main (
     sabioPreguntarContinuarONuevo,
     sabioManejarRuta,
     sabioAbrirPared,
+    sabioDerrumbe,
+    -- * Lectura de Indicadores
+    getIndicador,
+    getIndicadorStart,
     -- * Lectura de Rutas
     RutaState,
     getRuta,
@@ -38,9 +42,31 @@ main = do
   sabio <- execStateT sabioNewLaberinto (SabioConocimiento laberintoStart [])
   sabio2 <- execStateT sabioManejarRuta sabio
   sabio3 <- execStateT sabioAbrirPared sabio2
-  print (lab sabio3)
-  print (camino sabio3)
+  sabio4 <- execStateT sabioDerrumbe sabio3
+  print (lab sabio4)
+  print (camino sabio4)
 
+
+-- * Lectura de Indicadores
+
+-- | Manejo de obtención de Indicador de Dirección.
+-- No Imprime Instrucciones de uso
+getIndicador :: IO Indicador
+getIndicador = do 
+  linea <- getLine
+  case readMaybe linea :: Maybe Indicador of
+    Nothing -> do 
+                putStrLn ("Error leyendo parte de Indicador. Input Invalido: " ++ linea)
+                putStrLn "Indicadores válidos son: Izq, Rect, Der"
+                getIndicador
+    Just x -> return (x)
+
+-- | Manejo de obtención de Indicador de Dirección
+-- Imprime Instrucciones de uso
+getIndicadorStart :: IO Indicador
+getIndicadorStart = do
+  putStrLn "Escriba 'Izq', 'Der' o 'Rect' para Indicar la dirección"
+  getIndicador
 
 -- * Lectura de Rutas
 
@@ -197,6 +223,19 @@ sabioAbrirPared = do
       lift $ putStrLn "La Ruta abrió una pared."
       put $ SabioConocimiento (abrirPared l cr) ruta
     _ -> lift $ putStrLn "La Ruta no abrió ninguna pared."
+
+-- | Función para ayudar al Sabio a derrumbar una parte del laberinto
+sabioDerrumbe :: SabioState
+sabioDerrumbe = do 
+  lift $ putStrLn "Ruta a seguir para Derrumbar una Pared: "
+  r <- lift $ execStateT getRutaStart []
+  lift $ putStrLn "Dirección para Derrumbar una Pared: "
+  indi <- lift $ getIndicadorStart
+  sabio <- get
+  let ruta = camino sabio
+  let l = lab sabio
+  let cr = ruta ++ r
+  put $ SabioConocimiento (derrumbe l cr indi) ruta
 
           
 
