@@ -18,13 +18,15 @@ module Laberinto (
   laberintoStart, 
   tesoroAdd,
   trifurcacionAdd,
-  llenarRuta,
-  abrirPared,
   -- * Funciones de Acceso
   seguirRuta,
   seguirIzq,
   seguirRect,
-  seguirDer
+  seguirDer,
+  -- * Funciones de Modificación
+  llenarRuta,
+  abrirPared,
+  derrumbe
 ) where
 
 import Data.Maybe
@@ -85,31 +87,6 @@ trifurcacionAdd t l Izq = Trifurcacion {lft=Just l, fwd=fwd t, rgt=rgt t}
 trifurcacionAdd t l Rect = Trifurcacion {lft=lft t, fwd=Just l, rgt=rgt t}
 trifurcacionAdd t l Der = Trifurcacion {lft=lft t, fwd=fwd t, rgt=Just l}
 
--- | Crea un laberinto siguiendo una ruta
-llenarRuta :: Ruta -> Laberinto
-llenarRuta rs = foldr (flip (trifurcacionAdd laberintoStart)) laberintoStart rs
-
--- | Abrir seguir ruta para abrir una Pared en un Laberinto y continuar con el resto de la ruta.
--- Si no llega a pared no hace nada
-abrirPared :: Laberinto -> Ruta -> Laberinto
-abrirPared l [] = l
-
-abrirPared (Tesoro desc fwd) (Rect:xs) = 
-  Tesoro desc $ (Just (maybe (llenarRuta xs) (\l -> abrirPared l xs) fwd))
-
-abrirPared t@Tesoro{} (x:xs) = 
-  case x of
-    Izq -> Trifurcacion jl (Just t) Nothing
-    Der -> Trifurcacion Nothing (Just t) jl 
-  where jl = Just (llenarRuta xs)
-
-abrirPared (Trifurcacion lft fwd rgt) (x:xs) = 
-  case x of 
-    Izq -> Trifurcacion (abrir lft) fwd rgt
-    Rect -> Trifurcacion lft (abrir fwd) rgt
-    Der -> Trifurcacion lft fwd (abrir rgt)
-  where abrir lab = Just (maybe (llenarRuta xs) (\l -> abrirPared l xs) lab)
-
 -- * Funciones de Acceso
 
 -- | Dado un Laberinto y una Ruta, devuelve el Laberinto alcanzado al seguir la Ruta
@@ -136,3 +113,55 @@ seguirRect Trifurcacion {fwd=f} = f
 seguirDer :: Laberinto -> Maybe Laberinto
 seguirDer Tesoro {} = Nothing 
 seguirDer Trifurcacion {rgt=r} = r
+
+
+-- * Funciones de Modificación
+
+-- | Crea un laberinto siguiendo una ruta
+llenarRuta :: Ruta -> Laberinto
+llenarRuta rs = foldr (flip (trifurcacionAdd laberintoStart)) laberintoStart rs
+
+-- | Seguir ruta para abrir una Pared en un Laberinto y continuar con el resto de la ruta.
+-- Si no llega a pared, no hace nada
+abrirPared :: Laberinto -> Ruta -> Laberinto
+abrirPared l [] = l
+
+abrirPared (Tesoro desc fwd) (Rect:xs) = 
+  Tesoro desc $ (Just (maybe (llenarRuta xs) (\l -> abrirPared l xs) fwd))
+
+abrirPared t@Tesoro{} (x:xs) = 
+  case x of
+    Izq -> Trifurcacion jl (Just t) Nothing
+    Der -> Trifurcacion Nothing (Just t) jl 
+  where jl = Just (llenarRuta xs)
+
+abrirPared (Trifurcacion lft fwd rgt) (x:xs) = 
+  case x of 
+    Izq -> Trifurcacion (abrir lft) fwd rgt
+    Rect -> Trifurcacion lft (abrir fwd) rgt
+    Der -> Trifurcacion lft fwd (abrir rgt)
+  where abrir lab = Just (maybe (llenarRuta xs) (\l -> abrirPared l xs) lab)
+
+
+-- | Seguir ruta para derrumbar una Laberinto, de acuerdo a un Indicador, y continuar con el resto de la ruta.
+-- Si el Indicador no es una dirección válida, no hace nada
+derrumbe :: Laberinto -> Ruta -> Indicador -> Laberinto 
+
+derrumbe Tesoro{desc=d}  [] Rect = Tesoro d Nothing
+derrumbe t@Tesoro{}  [] _ = t
+
+derrumbe (Tesoro desc fwd) (Rect:xs) i = Tesoro desc (fwd >>= (\l -> Just (derrumbe l xs i)))
+derrumbe t@Tesoro{} (_:_) _ = t
+
+derrumbe Trifurcacion{lft=lf, fwd=fd, rgt=rg} [] i = 
+  case i of 
+    Izq -> Trifurcacion Nothing fd rg 
+    Rect -> Trifurcacion lf Nothing rg 
+    Der -> Trifurcacion lf fd Nothing 
+
+derrumbe Trifurcacion{lft=lf, fwd=fd, rgt=rg} (x:xs) i =
+  case x of
+    Izq -> Trifurcacion (lf >>= seguir) fd rg 
+    Rect -> Trifurcacion lf (fd >>= seguir) rg 
+    Der -> Trifurcacion lf fd (rg >>= seguir)
+  where seguir lab = Just (derrumbe lab xs i)
