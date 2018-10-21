@@ -27,7 +27,8 @@ module Laberinto (
   llenarRuta,
   abrirPared,
   derrumbe,
-  tomarTesoro
+  tomarTesoro,
+  hallarTesoro
 ) where
 
 import Data.Maybe
@@ -168,7 +169,7 @@ derrumbe Trifurcacion{lft=lf, fwd=fd, rgt=rg} (x:xs) i =
     Der -> Trifurcacion lf fd (rg >>= seguir)
   where seguir lab = Just (derrumbe lab xs i)
 
--- | Se sigue la Ruta hasta llegar a un Tesoro
+-- | Se sigue la Ruta hasta llegar a un Tesoro y lo toma si está presente
 tomarTesoro :: Laberinto -> Ruta -> Maybe Laberinto
 tomarTesoro Tesoro{} [] = Nothing
 -- No deberia usarse, pero esta por si acaso
@@ -185,3 +186,28 @@ tomarTesoro Trifurcacion{lft=lf, fwd=fd, rgt=rg} (x:xs) =
     Rect -> Just $ Trifurcacion lf (fd >>= seguir) rg 
     Der -> Just $ Trifurcacion lf fd (rg >>= seguir)
   where seguir lab = tomarTesoro lab xs
+
+-- | Se sigue la Ruta para colocar un Tesoro, si no hay uno presente
+hallarTesoro :: String -> Laberinto -> Ruta -> Laberinto 
+-- No hace nada
+hallarTesoro _ l [] = l
+-- Tesoro en el mismo lugar 
+hallarTesoro _ t@Tesoro{}  [_] = t
+
+hallarTesoro s Trifurcacion{lft=lf, fwd=fd, rgt=rg} [x] = 
+  case x of
+    Izq -> Trifurcacion (colocar lf) fd rg 
+    Rect -> Trifurcacion lf (colocar fd) rg 
+    Der -> Trifurcacion lf fd (colocar rg)
+  where colocar lab = Just $ Tesoro s lab
+
+hallarTesoro s (Tesoro d fd) (Rect:xs) = Tesoro d (fd >>= (\l -> Just $ hallarTesoro s l xs))
+-- Movimientos Invalidos
+hallarTesoro _ t@Tesoro{} (_:_) = t
+
+hallarTesoro s Trifurcacion{lft=lf, fwd=fd, rgt=rg} (x:xs) = 
+  case x of
+    Izq -> Trifurcacion (lf >>= seguir) fd rg 
+    Rect -> Trifurcacion lf (fd >>= seguir) rg 
+    Der -> Trifurcacion lf fd (rg >>= seguir)
+  where seguir lab = Just $ hallarTesoro s lab xs
