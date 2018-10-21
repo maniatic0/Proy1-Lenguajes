@@ -11,9 +11,13 @@ Módulo para que un Sabio maneje un Laberinto.
 -}
 module Main (
     main,
-    -- * Manejo de Sabio
+    -- * Control de Sabio
     SabioConocimiento,
     SabioState,
+    sabioMain,
+    getOpcion,
+    leerOpciones,
+    -- * Manejo de Sabio
     sabioNewLaberinto,
     sabioCheckPreguntarRuta,
     mostrarLab,
@@ -38,18 +42,95 @@ import Text.Read hiding (lift, get)
 
 import Laberinto
     
+
+-- | Inicio del Sabio
 main :: IO ()
 main = do
-  putStrLn "Hello, Haskell!"
-  sabio <- execStateT sabioNewLaberinto (SabioConocimiento laberintoStart [])
-  sabio2 <- execStateT sabioManejarRuta sabio
-  sabio3 <- execStateT sabioAbrirPared sabio2
-  sabio4 <- execStateT sabioDerrumbe sabio3
-  sabio5 <- execStateT sabioHallarTesoro sabio4
-  sabio6 <- execStateT sabioTomarTesoro sabio5
-  print (lab sabio6)
-  print (camino sabio6)
+  putStrLn "Sabio de Christian Oliveros y David Rodriguez"
+  leerOpciones
+  sabio <- execStateT sabioMain (SabioConocimiento laberintoStart [])
+  putStrLn "Gracias por usar el Sabio de Christian Oliveros y David Rodriguez"
 
+-- * Control de Sabio
+
+-- | Conocimientos del Sabio
+data SabioConocimiento = SabioConocimiento { 
+  -- | Laberinto que está pensando el Sabio
+  lab :: Laberinto, 
+  -- | Laberinto que se le dijo al Sabio
+  camino :: Ruta
+  }
+
+-- | Monad State para manejar el conocimiento del sabio
+type SabioState = StateT SabioConocimiento IO ()
+
+-- | Lectura de Opciones para el Sabio
+getOpcion :: IO Int
+getOpcion = do 
+  linea <- getLine
+  case readMaybe linea :: Maybe Int of
+    Nothing -> do
+      putStrLn ("Error leyendo Opción. Input Invalido: " ++ linea)
+      getOpcion
+    Just i ->
+      case elem i [0..9] of
+        False -> do
+          putStrLn ("Error de Opción: Fuera de Rango. El rango aceptado es de 0 a 9. \
+            \ Input Invalido: " ++ linea)
+          getOpcion
+        True -> return i
+
+-- | Muestra las Opciones del Sabio
+leerOpciones :: IO ()
+leerOpciones = 
+  putStrLn "Las Opciones para hablar con el Sabio son:\n \
+  \\t0) Leer opciones.\n \
+  \\t1) Comenzar a hablar de un laberinto nuevo.\n \
+  \\t2) Preguntar ruta.\n \
+  \\t3) Reportar pared abierta.\n \
+  \\t4) Reportar derrumbe.\n \
+  \\t5) Reportar tesoro tomado.\n \
+  \\t6) Reportar tesoro hallado.\n \
+  \\t7) Dar nombre al laberinto.\n \
+  \\t8) Hablar de un laberinto de nombre conocido. \n \
+  \\t9) Salir."
+
+-- | Ciclo de Pensamientos del Sabio
+sabioMain :: SabioState
+sabioMain = do 
+  separator
+  lift $ putStrLn "¿Qué desea solicitarle al Sabio?"
+  ops <- lift $ getOpcion
+  case ops of 
+    0 -> do
+      lift $ leerOpciones
+      sabioMain
+    1 -> do
+      sabioNewLaberinto
+      sabioMain
+    2 -> do 
+      sabioManejarRuta
+      sabioMain
+    3 -> do 
+      sabioAbrirPared
+      sabioMain
+    4 -> do 
+      sabioDerrumbe
+      sabioMain
+    5 -> do 
+      sabioTomarTesoro
+      sabioMain
+    6 -> do 
+      sabioHallarTesoro
+      sabioMain
+    7 -> do 
+      lift $ putStrLn "Falta por hacer"
+      sabioMain
+    8 -> do 
+      lift $ putStrLn "Falta por hacer"
+      sabioMain
+    9 -> lift $ putStrLn "Saliendo"  
+  where separator = lift $ putStrLn "-------------------------------------------------------\n"
 
 -- * Lectura de Indicadores
 
@@ -110,17 +191,6 @@ getRutaStart = do
  
 -- * Manejo de Sabio
 
--- | Conocimientos del Sabio
-data SabioConocimiento = SabioConocimiento { 
-  -- | Laberinto que está pensando el Sabio
-  lab :: Laberinto, 
-  -- | Laberinto que se le dijo al Sabio
-  camino :: Ruta
-  }
-
--- | Monad State para manejar el conocimiento del sabio
-type SabioState = StateT SabioConocimiento IO ()
-
 -- | Comenzar a hablar de un laberinto nuevo: Si esta opción es seleccionada, 
 -- se reemplaza el laberinto en memoria con un laberinto vacío y se pide una ruta 
 -- que puede ser seguida en el mismo. Se usa esta ruta para poblar el laberinto inicialmente. 
@@ -129,6 +199,7 @@ sabioNewLaberinto :: SabioState
 sabioNewLaberinto = do
   lift $ putStrLn "Comenzando Laberinto nuevo.\nPor favor indique Ruta inicial."
   ruta <- lift $ execStateT getRutaStart []
+  lift $ putStrLn "Laberinto Creado"
   put $ SabioConocimiento (llenarRuta ruta) [] 
 
 -- | Sabio revisa las condiciones para Preguntar la Ruta a seguir  
