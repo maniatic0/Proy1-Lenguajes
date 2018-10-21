@@ -22,6 +22,7 @@ module Main (
     sabioAbrirPared,
     sabioDerrumbe,
     sabioTomarTesoro,
+    sabioHallarTesoro,
     -- * Lectura de Indicadores
     getIndicador,
     getIndicadorStart,
@@ -44,9 +45,10 @@ main = do
   sabio2 <- execStateT sabioManejarRuta sabio
   sabio3 <- execStateT sabioAbrirPared sabio2
   sabio4 <- execStateT sabioDerrumbe sabio3
-  sabio5 <- execStateT sabioTomarTesoro sabio4
-  print (lab sabio5)
-  print (camino sabio5)
+  sabio5 <- execStateT sabioHallarTesoro sabio4
+  sabio6 <- execStateT sabioTomarTesoro sabio5
+  print (lab sabio6)
+  print (camino sabio6)
 
 
 -- * Lectura de Indicadores
@@ -229,7 +231,7 @@ sabioAbrirPared = do
 -- | Función para ayudar al Sabio a derrumbar una parte del laberinto
 sabioDerrumbe :: SabioState
 sabioDerrumbe = do 
-  lift $ putStrLn "Ruta a seguir para Derrumbar una Pared: "
+  lift $ putStrLn "Ruta a seguir para Derrumbar una Trozo del Laberinto: "
   r <- lift $ execStateT getRutaStart []
   lift $ putStrLn "Dirección para Derrumbar una Pared: "
   indi <- lift $ getIndicadorStart
@@ -256,5 +258,26 @@ sabioTomarTesoro = do
     _ -> lift $ putStrLn "No se ha encontrado un Tesoro para tomar."
           
 
-
+-- | Función para ayudar al Sabio a hallar un Tesoro en el Laberinto
+sabioHallarTesoro :: SabioState
+sabioHallarTesoro = do 
+  lift $ putStrLn "Ruta a seguir para hallar un Tesoro en el Laberinto: "
+  r <- lift $ execStateT getRutaStart []
+  lift $ putStrLn "Descripción del Laberinto hallado: "
+  s <- lift $ getLine
+  sabio <- get
+  let ruta = camino sabio
+  let l = lab sabio
+  let cr = ruta ++ r
+  case cr of
+    [] -> lift $ putStrLn "Ruta vacía. No se aplicaran cambios."
+    _ -> do
+      case seguirRuta l cr of
+        Just Tesoro{} -> lift $ putStrLn "Se ha encontrado un Tesoro, no se ha realizado cambio."
+        Nothing -> do 
+          lift $ putStrLn "Advertencia: se encontró una Pared. Tal vez no se aplicaran cambios."
+          put $ SabioConocimiento (hallarTesoro s l cr) ruta
+        _ ->  do
+          lift $ putStrLn "Colocando Tesoro"
+          put $ SabioConocimiento (hallarTesoro s l cr) ruta
         
