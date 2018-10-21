@@ -39,8 +39,12 @@ import Text.Read
 
 -- | Indicador de cuál camino relaciona una Trifurcacion y un Laberinto
 data Indicador 
-  = Izq
+  = 
+  -- | Indicador para la Izquierda
+    Izq
+  -- | Indicador para Derecho
   | Rect
+  -- | Indicador para la Derecha
   | Der
   deriving ( Enum
            , Show
@@ -60,13 +64,13 @@ data Laberinto
             }
   -- | Trifurcacion del Laberinto
   | Trifurcacion { -- | Laberinto indicando lo alcanzable al voltear a la izquierda, 
-                   -- | o Nothing si no es posible voltear a la izquierda
+                   -- o Nothing si no es posible voltear a la izquierda
                     lft :: Maybe Laberinto
                   -- | Laberinto indicando lo alcanzable al voltear a la derecha, 
-                  -- | o Nothing si no es posible voltear a la derecha
+                  -- o Nothing si no es posible voltear a la derecha
                   , fwd :: Maybe Laberinto
                   -- | Laberinto indicando lo alcanzable al seguir a la recto, 
-                  -- | o Nothing si no es posible seguir a la recto
+                  -- o Nothing si no es posible seguir a la recto
                   , rgt :: Maybe Laberinto
                   }
     deriving (Read, Show)
