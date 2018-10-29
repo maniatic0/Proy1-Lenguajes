@@ -27,6 +27,8 @@ module Main (
     sabioDerrumbe,
     sabioTomarTesoro,
     sabioHallarTesoro,
+    sabioGenerarArchivoRuta,
+    sabioLeerArchivoRuta,
     -- * Lectura de Indicadores
     getIndicador,
     getIndicadorStart,
