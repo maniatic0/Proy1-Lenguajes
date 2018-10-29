@@ -364,15 +364,22 @@ sabioGenerarArchivoLab = do
   lift $ putStrLn "Indique el nombre del archivo a Crear"
   archivo <- lift $ getLine
   x <- lift $ doesFileExist archivo
-  when (x) $ do
-    lift $ putStrLn "El archivo ya existe, desea, reemplazarlo? (Y/N)"
-    y <- lift $ getLine
-    case y of 
-      "Y" -> lift $ removeFile archivo
-      _ -> lift $ putStrLn "Archivo no eliminado, no se hará nada"
-  sabio <- get
-  let l = lab sabio
-  lift $ writeFile archivo (show l)
+  case x of
+    True ->  do
+      lift $ putStrLn "El archivo ya existe, desea, reemplazarlo? (Y/N)"
+      y <- lift $ getLine
+      case y of 
+        "Y" -> do 
+          lift $ removeFile archivo
+          sabio <- get
+          let l = lab sabio
+          lift $ writeFile archivo (show l)
+        _ -> lift $ putStrLn "Archivo no eliminado, no se hará nada"
+    _ -> do
+      sabio <- get
+      let l = lab sabio
+      lift $ writeFile archivo (show l)
+    
 
 
 
@@ -390,7 +397,7 @@ sabioLeerArchivoLab = do
       case read l :: Maybe Laberinto of 
         Just laberinto -> put $ SabioConocimiento laberinto []
         _ -> lift $ putStrLn "Archivo contiene un laberinto inválido"
-        
+
     _ -> lift $ putStrLn "El archivo no existe\n"
 
  
