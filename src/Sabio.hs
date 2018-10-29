@@ -27,6 +27,8 @@ module Main (
     sabioDerrumbe,
     sabioTomarTesoro,
     sabioHallarTesoro,
+    sabioGenerarArchivoLab,
+    sabioLeerArchivoLab,
     -- * Lectura de Indicadores
     getIndicador,
     getIndicadorStart,
@@ -127,10 +129,10 @@ sabioMain = do
       sabioHallarTesoro
       sabioMain
     7 -> do 
-      sabioGenerarArchivoRuta
+      sabioGenerarArchivoLab
       sabioMain
     8 -> do 
-      lift $ putStrLn "Falta por hacer"
+      sabioLeerArchivoLab
       sabioMain
     9 -> lift $ putStrLn "Saliendo"  
   where separator = lift $ putStrLn "-------------------------------------------------------\n"
@@ -357,8 +359,8 @@ sabioHallarTesoro = do
         
 
 -- | Función para Guardar la ruta leida en un archivo
-sabioGenerarArchivoRuta :: SabioState
-sabioGenerarArchivoRuta = do 
+sabioGenerarArchivoLab :: SabioState
+sabioGenerarArchivoLab = do 
   lift $ putStrLn "Indique el nombre del archivo a Crear"
   archivo <- lift $ getLine
   x <- lift $ doesFileExist archivo
@@ -375,15 +377,15 @@ sabioGenerarArchivoRuta = do
 
 
 -- | Función para Generar un nuevo laberinto leido desde un archivo
-sabioLeerArchivoRuta :: SabioState
-sabioLeerArchivoRuta = do
+sabioLeerArchivoLab :: SabioState
+sabioLeerArchivoLab = do
   lift $ putStrLn "Indique el nombre del archivo a Leer\n"
   archivo <- lift $ getLine
   x <- lift $ doesFileExist archivo
 
   when (x == False) $ do
     lift $ putStrLn "El archivo no existe\n"
-    sabioLeerArchivoRuta
+    sabioLeerArchivoLab
 
   l <- lift $ readFile archivo
-  put $ SabioConocimiento l Nothing
+  put $ SabioConocimiento (read l) []
