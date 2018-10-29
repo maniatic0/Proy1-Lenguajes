@@ -394,7 +394,9 @@ sabioLeerArchivoLab = do
       l <- lift $ readFile archivo
 
       case readMaybe l :: Maybe Laberinto of 
-        Just laberinto -> put $ SabioConocimiento laberinto []
+        Just laberinto -> do 
+          put $ SabioConocimiento laberinto []
+          lift $ putStrLn "Archivo Cargado"
         _ -> lift $ putStrLn "Archivo contiene un laberinto inválido"
 
     _ -> lift $ putStrLn "El archivo no existe"
