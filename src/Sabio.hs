@@ -362,14 +362,12 @@ sabioGenerarArchivoRuta = do
   lift $ putStrLn "Indique el nombre del archivo a Crear"
   archivo <- lift $ getLine
   x <- lift $ doesFileExist archivo
-  if x 
-    then do
-        lift $ putStrLn "El archivo ya existe, desea, reemplazarlo? (Yes/No)"
-        y <- lift $ getLine
-        case y of 
-          "Yes" -> lift $ removeFile archivo
-          "No" -> sabioMain 
-
+  when (x) $ do
+    lift $ putStrLn "El archivo ya existe, desea, reemplazarlo? (Y/N)"
+    y <- lift $ getLine
+    case y of 
+      "Y" -> lift $ removeFile archivo
+      _ -> lift $ putStrLn "Archivo no eliminado, no se hará nada"
   sabio <- get
   let l = lab sabio
   lift $ writeFile archivo (show l)
@@ -377,16 +375,15 @@ sabioGenerarArchivoRuta = do
 
 
 -- | Función para Generar un nuevo laberinto leido desde un archivo
-{-sabioLeerArchivoRuta :: SabioState
+sabioLeerArchivoRuta :: SabioState
 sabioLeerArchivoRuta = do
   lift $ putStrLn "Indique el nombre del archivo a Leer\n"
   archivo <- lift $ getLine
-  x <- doesFileExist archivo
+  x <- lift $ doesFileExist archivo
 
-  if !x then do
+  when (x == False) $ do
     lift $ putStrLn "El archivo no existe\n"
     sabioLeerArchivoRuta
-  l <- lift $ readFile archivo
-  put $ SabioConocimiento ()
 
--}
+  l <- lift $ readFile archivo
+  put $ SabioConocimiento l Nothing
