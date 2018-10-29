@@ -382,11 +382,10 @@ sabioGenerarArchivoLab = do
     
 
 
-
 -- | Función para Generar un nuevo laberinto leido desde un archivo
 sabioLeerArchivoLab :: SabioState
 sabioLeerArchivoLab = do
-  lift $ putStrLn "Indique el nombre del archivo a Leer\n"
+  lift $ putStrLn "Indique el nombre del archivo a Leer"
   archivo <- lift $ getLine
   x <- lift $ doesFileExist archivo
 
@@ -398,6 +397,6 @@ sabioLeerArchivoLab = do
         Just laberinto -> put $ SabioConocimiento laberinto []
         _ -> lift $ putStrLn "Archivo contiene un laberinto inválido"
 
-    _ -> lift $ putStrLn "El archivo no existe\n"
+    _ -> lift $ putStrLn "El archivo no existe"
 
  
