@@ -11,3 +11,5 @@ De Christian Oliveros 13-11000 y David Rodriguez 14-10930.
 ```Shell
 cabal update && cabal install mtl
 ```
+
+Nota, aveces en Windows requiere mintty para instalar directory. Debería venir por default.
