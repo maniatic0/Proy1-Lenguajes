@@ -9,5 +9,7 @@ De Christian Oliveros 13-11000 y David Rodriguez 14-10930.
 * También, requiere que la Librería de Monads Transformadoras esté instalada. En caso de no estar, usar:
 
 ```Shell
-cabal update && cabal install mtl
+cabal update && cabal install mtl directory
 ```
+
+Nota, aveces en Windows requiere mintty para instalar directory. Debería venir por default.
