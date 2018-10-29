@@ -1,4 +1,4 @@
-{-|
+{- |
 Module      : Sabio
 Description : Modulo de un Sabio que maneja un Laberinto
 Copyright   : (c) Christian Oliveros, 2018
@@ -39,6 +39,8 @@ module Main (
 import Data.Maybe
 import Control.Monad.State 
 import Text.Read hiding (lift, get)
+import System.IO
+import System.Directory
 
 import Laberinto
     
@@ -47,7 +49,7 @@ import Laberinto
 main :: IO ()
 main = do
   putStrLn "Sabio de Christian Oliveros y David Rodriguez"
-  leerOpciones
+  
   sabio <- execStateT sabioMain (SabioConocimiento laberintoStart [])
   putStrLn "Gracias por usar el Sabio de Christian Oliveros y David Rodriguez"
 
@@ -98,12 +100,13 @@ leerOpciones =
 -- | Ciclo de Pensamientos del Sabio
 sabioMain :: SabioState
 sabioMain = do 
+  lift $ leerOpciones
   separator
   lift $ putStrLn "¿Qué desea solicitarle al Sabio?"
   ops <- lift $ getOpcion
   case ops of 
     0 -> do
-      lift $ leerOpciones
+      --lift $ leerOpciones
       sabioMain
     1 -> do
       sabioNewLaberinto
@@ -124,7 +127,7 @@ sabioMain = do
       sabioHallarTesoro
       sabioMain
     7 -> do 
-      lift $ putStrLn "Falta por hacer"
+      sabioGenerarArchivoRuta
       sabioMain
     8 -> do 
       lift $ putStrLn "Falta por hacer"
@@ -265,7 +268,7 @@ sabioManejarRuta = do
   let l = lab sabio
   case sabioCheckPreguntarRuta l ruta of 
     True -> do 
-        lift $ putStrLn "El Sabio regunta por una Ruta a seguir: "
+        lift $ putStrLn "El Sabio pregunta por una Ruta a seguir: "
         r <- lift $ execStateT getRutaStart []
         put $ SabioConocimiento l r
         lift $ mostrarLab $ seguirRuta l r 
@@ -352,3 +355,38 @@ sabioHallarTesoro = do
           lift $ putStrLn "Colocando Tesoro"
           put $ SabioConocimiento (hallarTesoro s l cr) ruta
         
+
+-- | Función para Guardar la ruta leida en un archivo
+sabioGenerarArchivoRuta :: SabioState
+sabioGenerarArchivoRuta = do 
+  lift $ putStrLn "Indique el nombre del archivo a Crear"
+  archivo <- lift $ getLine
+  x <- lift $ doesFileExist archivo
+  if x 
+    then do
+        lift $ putStrLn "El archivo ya existe, desea, reemplazarlo? (Yes/No)"
+        y <- lift $ getLine
+        case y of 
+          "Yes" -> lift $ removeFile archivo
+          "No" -> sabioMain 
+
+  sabio <- get
+  let l = lab sabio
+  lift $ writeFile archivo (show l)
+
+
+
+-- | Función para Generar un nuevo laberinto leido desde un archivo
+{-sabioLeerArchivoRuta :: SabioState
+sabioLeerArchivoRuta = do
+  lift $ putStrLn "Indique el nombre del archivo a Leer\n"
+  archivo <- lift $ getLine
+  x <- doesFileExist archivo
+
+  if !x then do
+    lift $ putStrLn "El archivo no existe\n"
+    sabioLeerArchivoRuta
+  l <- lift $ readFile archivo
+  put $ SabioConocimiento ()
+
+-}
